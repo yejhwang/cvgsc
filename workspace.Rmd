@@ -1,0 +1,26 @@
+---
+title: "workspace"
+author: "Yejin Hwang"
+date: "4/22/2020"
+output: html_document
+---
+
+Looking at commercial video games with available source code
+- genre of the game
+- first release date
+- source code release date
+- developer
+- etc.
+
+web scraping
+
+How (might have) does the Open Data Movement, which was active since the mid 2000's, impact commercial markets?
+
+Does the length of time before the source code became available relate to the type of the game (genre)?
+
+Suggestions: Would likely need to talk to experts in gaming to make sure that there aren't confounding factors besides the Open Data Movement that might have pushed markets in similar directions.
+
+```{r}
+library(tidyverse)
+```
+
