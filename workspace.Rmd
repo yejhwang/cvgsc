@@ -1,26 +1,143 @@
 ---
-title: "workspace"
+title: "Final Project: Professional Pitch"
 author: "Yejin Hwang"
 date: "4/22/2020"
-output: html_document
+output:
+  html_document:
+    code_folding: hide
 ---
 
-Looking at commercial video games with available source code
-- genre of the game
-- first release date
-- source code release date
-- developer
-- etc.
+# Video Games Source Code Open Data Movement
 
-web scraping
-
-How (might have) does the Open Data Movement, which was active since the mid 2000's, impact commercial markets?
-
-Does the length of time before the source code became available relate to the type of the game (genre)?
-
-Suggestions: Would likely need to talk to experts in gaming to make sure that there aren't confounding factors besides the Open Data Movement that might have pushed markets in similar directions.
-
-```{r}
+```{r settingUp, warning=FALSE}
 library(tidyverse)
+library(rvest)
+library(stringr)
+library(readr)
 ```
+
+```{r scraping}
+url <- "https://en.wikipedia.org/wiki/List_of_commercial_video_games_with_available_source_code"
+webpage <- read_html(url)
+
+# Table 1
+# Games with instantly included source code
+table_html1 <- html_nodes(webpage, xpath = '//*[@id="mw-content-text"]/div/table[1]')
+table1 <- html_table(table_html1)[[1]]
+
+# Table 2
+# Games with later released source code
+table_html2 <- html_nodes(webpage, xpath = '//*[@id="mw-content-text"]/div/table[2]')
+# table2 <- html_table(table_html2)[[1]]
+# The code above suddenly got an "Error: Table has inconsistent number of columns. Do you want fill = TRUE?"
+# So modified the code to:
+table2 <-table_html2%>%
+html_table(fill=TRUE) %>%
+.[[1]]
+
+# Table 3
+# Games with available source code
+# table_html3 <- html_nodes(webpage, xpath = '//*[@id="mw-content-text"]/div/table[3]')
+# table3 <- html_table(table_html3)[[1]]
+
+# Table 4
+# Games with reconstructed source code
+# table_html4 <- html_nodes(webpage, xpath = '//*[@id="mw-content-text"]/div/table[4]')
+# table4 <- html_table(table_html4)[[1]]
+```
+
+```{r cleaning}
+# later_released = 0 for instantly included, = 1 for later released
+
+# Combining Tables 1 and 2:
+# Function to create the same format:
+ff <- function(df, lr){
+  newdf <- df %>% 
+    select(1:4) %>% 
+    mutate(later_released = lr)
+  return(newdf)
+}
+
+test1 <- ff(table1,0)
+test2 <- ff(table2,1)
+alldf <- rbind(test1, test2)
+#library(janitor)
+#library(devtools)
+#devtools::install_github("tidyverse/dplyr")
+#library(dplyr, warn.conflicts = FALSE)
+
+#cleanedAll <-all %>% rename_with(make_clean_names)
+alldf <-rename(alldf, c("fr"="First release", "scr"="Source code release"))
+
+alldf$first_release <- format(as.Date(alldf$fr, format="%Y"),"%Y")
+alldf$source_code_release <- format(as.Date(alldf$scr, format="%Y"),"%Y")
+alldf <- alldf %>% mutate(first_release = ifelse(Title=="Stunt Copter", 1980, first_release))
+alldf <- alldf %>% mutate(source_code_release = ifelse(Title=="Taxman", NA, source_code_release))
+alldf <- alldf %>% mutate(first_release =parse_number(first_release), source_code_release =parse_number(source_code_release))
+
+longdf <- pivot_longer(alldf, cols=c(first_release, source_code_release), names_to = "year_type", values_to = "year")
+```
+
+```{r exploratory}
+distinct(alldf, Genre) # Needs cleaning if plan to use
+distinct(longdf, year) %>% arrange(year) # Range of year: 1962 - 2020
+```
+
+
+```{r graphingA}
+mu <- longdf %>% 
+  select(year_type, year) %>% 
+  filter(year>1961) %>% 
+  group_by(year_type) %>% 
+  summarise(grp_mean = mean(year)) %>% 
+  mutate(Average = if_else(year_type=="first_release", "First Release", "Source Code Release"))
+
+longdf %>% ggplot(aes(x=year)) +
+  geom_histogram(alpha = 0.8, position="dodge",aes(fill = year_type))+
+  geom_vline(data=mu, aes(xintercept=grp_mean, color=Average),
+             linetype="dashed")+
+  theme(legend.position="top")+ 
+  labs(fill = NULL,x = "Year", y= "Number of Video Games", title = "Distribution of Releases over Time",caption = "Source Code Scraped from Wikipedia")
+
+mu
+```
+
+
+```{r graphingB}
+p<-ggplot(table1, aes(x=Genre)) + 
+  geom_histogram(stat="count")
+
+# Create data
+data <- data.frame(
+  x=LETTERS[1:26],
+  y=abs(rnorm(26))
+)
+
+# Plot
+ggplot(data, aes(x=x, y=y)) +
+  geom_segment( aes(x=x, xend=x, y=0, yend=y), color="grey") +
+  geom_point( color="orange", size=4) +
+  theme_light() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.x = element_blank()
+  ) +
+  xlab("") +
+  ylab("Value of Y")
+
+
+# Horizontal version
+ggplot(data, aes(x=x, y=y)) +
+  geom_segment( aes(x=x, xend=x, y=0, yend=y), color="skyblue") +
+  geom_point( color="blue", size=4, alpha=0.6) +
+  theme_light() +
+  coord_flip() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+```
+
 
