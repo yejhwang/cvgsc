@@ -6,17 +6,14 @@ output:
   html_document:
     code_folding: hide
 ---
-
-# Video Games Source Code Open Data Movement
-
-```{r settingUp, warning=FALSE}
+```{r settingUp, warning=FALSE, message=FALSE}
 library(tidyverse)
 library(rvest)
 library(stringr)
 library(readr)
 ```
 
-```{r scraping}
+```{r scraping, warning=FALSE, message=FALSE}
 url <- "https://en.wikipedia.org/wiki/List_of_commercial_video_games_with_available_source_code"
 webpage <- read_html(url)
 
@@ -61,12 +58,6 @@ ff <- function(df, lr){
 test1 <- ff(table1,0)
 test2 <- ff(table2,1)
 alldf <- rbind(test1, test2)
-#library(janitor)
-#library(devtools)
-#devtools::install_github("tidyverse/dplyr")
-#library(dplyr, warn.conflicts = FALSE)
-
-#cleanedAll <-all %>% rename_with(make_clean_names)
 alldf <-rename(alldf, c("fr"="First release", "scr"="Source code release"))
 
 alldf$first_release <- format(as.Date(alldf$fr, format="%Y"),"%Y")
@@ -78,13 +69,24 @@ alldf <- alldf %>% mutate(first_release =parse_number(first_release), source_cod
 longdf <- pivot_longer(alldf, cols=c(first_release, source_code_release), names_to = "year_type", values_to = "year")
 ```
 
-```{r exploratory}
+```{r exploratory, eval=FALSE}
 distinct(alldf, Genre) # Needs cleaning if plan to use
 distinct(longdf, year) %>% arrange(year) # Range of year: 1962 - 2020
 ```
 
+# Open Source Code for Commercial Products 
+### Subtopics: Video Games Source Code, Open Data Movement
 
-```{r graphingA}
+The booming multi-billion dollar video game industry grew again in Spring 2020 with the success of Animal Crossing: New Horizons, [as its launch sales surpassed any Mario or Zelda in the U.S.](https://venturebeat.com/2020/04/21/animal-crossing-new-horizons-is-already-the-best-selling-game-in-the-series-in-the-u-s/) historically. [The Getty Museum tweeted](https://twitter.com/GettyMuseum/status/1250921354552938496) that their project with Animal Crossing was built on open-source code by [ACPatterns](https://acpatterns.com/), an Animal Crossing Pattern Tool. [“Open source products include permission to use the source code, design documents, or content of the product.”](https://en.wikipedia.org/wiki/Open_source) How does open-source code work with commercial products such as Animal Crossing?
+
+When [“anyone can freely access, use, modify, and share data for any purpose,”](https://bookbook.pubpub.org/pub/6ui5n4vo) is there enough motivation to collect the data, and develop the infrastructure in the first place?
+
+The inventor of the World Wide Web, Tim Berners Lee, asked the world to share its data in 2009. In the same year, the historic launching of data.gov redefined public information as information available online and strengthened the Open Data Movement that has been active since the mid-2000’s. With the intertwining of the Open Source Software Movement and the Free Software Movement, people are still debating the pros and cons of this transparency. 
+
+The graph below visualizes the distribution of video games with available source code to compare the timing in which the game was first released and when the source code was released thereafter. In comparison to the average game release year in 1989, the average year in which the source code was released is mid-to-late 2007 and seems to parallel when the Open Data and Open Source movements took off. 
+
+
+```{r graphingA, warning=FALSE, message=FALSE}
 mu <- longdf %>% 
   select(year_type, year) %>% 
   filter(year>1961) %>% 
@@ -99,45 +101,20 @@ longdf %>% ggplot(aes(x=year)) +
   theme(legend.position="top")+ 
   labs(fill = NULL,x = "Year", y= "Number of Video Games", title = "Distribution of Releases over Time",caption = "Source Code Scraped from Wikipedia")
 
-mu
+# mu
 ```
 
+Yet, while these movements distribute the power away from third party vendors to the public, and pushes the bar of high quality through the ease of code modification, it brings to light the issue of protecting individuals at higher risk of being identified in open data and the decrease in monetary motivation that comes with newly developed *and* confidential code. 
 
-```{r graphingB}
-p<-ggplot(table1, aes(x=Genre)) + 
-  geom_histogram(stat="count")
+With the new releases of video game consoles, developing game technologies, and continually booming video game industry, the problems that come with open source code do not seem to outweigh the benefits. In fact there are specific benefits that pertain to the video game industry such as preventing work from becoming abandonware, utilizing various software licenses, and copyright complications. Further, there are many cases in which the public find the source code on their own, negating the efforts to keep code confidential.
 
-# Create data
-data <- data.frame(
-  x=LETTERS[1:26],
-  y=abs(rnorm(26))
-)
+I plan on continuing the analysis and suggesting how the benefits of Open Source specific to the video game industry can be translated to other sectors such as the government (i.e. taking out the risk through synthesized data).
 
-# Plot
-ggplot(data, aes(x=x, y=y)) +
-  geom_segment( aes(x=x, xend=x, y=0, yend=y), color="grey") +
-  geom_point( color="orange", size=4) +
-  theme_light() +
-  theme(
-    panel.grid.major.x = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.x = element_blank()
-  ) +
-  xlab("") +
-  ylab("Value of Y")
+Additional voices to be added to my article:
+* Jaron Vietor, CTO of MistServer and one of the developers of ACPatterns
+* Monika Hu, Assistant Professor of Mathematics and Statistics at Vassar College and researcher on generating synthetic family income (data) for consumer expenditure surveys
 
-
-# Horizontal version
-ggplot(data, aes(x=x, y=y)) +
-  geom_segment( aes(x=x, xend=x, y=0, yend=y), color="skyblue") +
-  geom_point( color="blue", size=4, alpha=0.6) +
-  theme_light() +
-  coord_flip() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-```
-
+Please let me know if I can provide additional information or if changes should be applied.
+Sincerely,
+Yejin Hwang
 
